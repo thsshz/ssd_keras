@@ -66,7 +66,7 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
     np.set_printoptions(precision=2, suppress=True, linewidth=90)
     print('   class   conf xmin   ymin   xmax   ymax')
 
-    for k in range(y_pred_thresh):
+    for k in range(len(y_pred_thresh)):
         print(file_names[k])
         print(y_pred_thresh[k])
         colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
