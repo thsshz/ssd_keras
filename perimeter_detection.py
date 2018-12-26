@@ -96,8 +96,9 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
             current_axis.text(xmin, ymin, label, size='x-large', color='white', bbox={'facecolor': color, 'alpha': 1.0})
 
         plt.savefig(result_path + '/detection_' + file_names[k], format='jpg')
+        plt.close('all')
 
-    vector_a = np.array([perimeter_a[0] - perimeter_b[0], perimeter_a[1] - perimeter_b[1]])
+    vector_a = np.array([perimeter_a[0] - perimeter_b[0], perimeter_a[1] - perimeter_b[1], 0])
     for k in range(len(y_pred_thresh)):
         plt.figure(figsize=(12, 8))
         plt.imshow(original_images[k])
@@ -113,27 +114,27 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
             ymin = box[3] * original_images[k].shape[0] / img_height
             xmax = box[4] * original_images[k].shape[1] / img_width
             ymax = box[5] * original_images[k].shape[0] / img_height
-            vector_b = np.array([xmin - perimeter_a[0], ymin - perimeter_a[1]])
+            vector_b = np.array([xmin - perimeter_a[0], ymin - perimeter_a[1], 0])
             distance = np.linalg.norm(np.cross(vector_a, vector_b)/np.linalg.norm(vector_a))
             if distance < threshold:
                 current_axis.add_patch(
                     plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#FF0000', fill=False, linewidth=2))
                 continue
-            vector_b = np.array([xmin - perimeter_a[0], ymax - perimeter_a[1]])
+            vector_b = np.array([xmin - perimeter_a[0], ymax - perimeter_a[1], 0])
             distance = np.linalg.norm(np.cross(vector_a, vector_b) / np.linalg.norm(vector_a))
             if distance < threshold:
                 current_axis.add_patch(
                     plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#FF0000', fill=False, linewidth=2))
                 continue
-            vector_b = np.array([xmax - perimeter_a[0], ymin - perimeter_a[1]])
+            vector_b = np.array([xmax - perimeter_a[0], ymin - perimeter_a[1], 0])
             distance = np.linalg.norm(np.cross(vector_a, vector_b) / np.linalg.norm(vector_a))
             if distance < threshold:
                 current_axis.add_patch(
                     plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#FF0000', fill=False, linewidth=2))
                 continue
-            vector_b = np.array([xmax - perimeter_a[0], ymax - perimeter_a[1]])
+            vector_b = np.array([xmax - perimeter_a[0], ymax - perimeter_a[1], 0])
             distance = np.linalg.norm(np.cross(vector_a, vector_b) / np.linalg.norm(vector_a))
-            if distance > threshold:
+            if distance < threshold:
                 current_axis.add_patch(
                     plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#FF0000', fill=False, linewidth=2))
                 continue
@@ -141,7 +142,7 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
                 plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#00FF00', fill=False, linewidth=2))
         plt.plot([perimeter_a[0], perimeter_b[0]], [perimeter_a[1], perimeter_b[1]], 'k')
         plt.savefig(result_path + '/perimeter_' + file_names[k], format='jpg')
-
+        plt.close('all')
 
 
 @click.command()
