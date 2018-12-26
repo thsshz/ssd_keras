@@ -140,7 +140,7 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
                 continue
             current_axis.add_patch(
                 plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#00FF00', fill=False, linewidth=2))
-        plt.plot([perimeter_a[0], perimeter_b[0]], [perimeter_a[1], perimeter_b[1]], 'k')
+        #plt.plot([perimeter_a[0], perimeter_b[0]], [perimeter_a[1], perimeter_b[1]], 'k')
         plt.savefig(result_path + '/perimeter_' + file_names[k], format='jpg')
         plt.close('all')
 
