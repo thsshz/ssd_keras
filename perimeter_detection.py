@@ -6,7 +6,7 @@ import numpy as np
 import click
 import os
 from matplotlib import pyplot as plt
-
+from matplotlib.lines import Line2D
 from models.keras_ssd300 import ssd_300
 from keras_loss_function.keras_ssd_loss import SSDLoss
 
@@ -140,6 +140,8 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
                 continue
             current_axis.add_patch(
                 plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#00FF00', fill=False, linewidth=2))
+        line = Line2D([perimeter_a[0], perimeter_b[0]], [perimeter_a[1], perimeter_b[1]], color='#000000')
+        current_axis.add_line(line)
         #plt.plot([perimeter_a[0], perimeter_b[0]], [perimeter_a[1], perimeter_b[1]], 'k')
         plt.savefig(result_path + '/perimeter_' + file_names[k], format='jpg')
         plt.close('all')
