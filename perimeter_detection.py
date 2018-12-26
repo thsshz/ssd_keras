@@ -149,10 +149,18 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
 @click.option('--image_path', required=True, help='Image path for detection')
 @click.option('--result_path', required=True, help='Result image path')
 @click.option('--threshold', required=True, help='Distance threshold')
-@click.option('--perimeter_a', required=True, help='Perimeter vertex a coordinates')
-@click.option('--perimeter_b', required=True, help='Perimeter vertex b coordinates')
-def perimeter_detection_command(weights_path, image_path, result_path, threshold, perimeter_a, perimeter_b):
-    return perimeter_detection(weights_path, image_path, result_path, threshold, perimeter_a, perimeter_b)
+@click.option('--perimeter_ax', required=True, help='Perimeter vertex a coordinate X')
+@click.option('--perimeter_ay', required=True, help='Perimeter vertex a coordinate Y')
+@click.option('--perimeter_bx', required=True, help='Perimeter vertex b coordinate X')
+@click.option('--perimeter_by', required=True, help='Perimeter vertex b coordinate Y')
+def perimeter_detection_command(weights_path, image_path, result_path, threshold, perimeter_ax, perimeter_ay, perimeter_bx, perimeter_by):
+    perimeter_a = []
+    perimeter_a.append(float(perimeter_ax))
+    perimeter_a.append(float(perimeter_ay))
+    perimeter_b = []
+    perimeter_b.append(float(perimeter_bx))
+    perimeter_b.append(float(perimeter_by))
+    return perimeter_detection(weights_path, image_path, result_path, float(threshold), perimeter_a, perimeter_b)
 
 
 if __name__ == '__main__':
