@@ -5,6 +5,7 @@ from imageio import imread
 import numpy as np
 import click
 import os
+import time
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from models.keras_ssd300 import ssd_300
@@ -57,8 +58,11 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
             resize_image = image.img_to_array(resize_image)
             process_images.append(resize_image)
     process_images = np.array(process_images)
-
+    
+    start_time = time.time()
     y_pred = model.predict(process_images)
+    end_time = time.time()
+    print(end_time - start_time)
     confidence_threshold = 0.5
 
     y_pred_thresh = [y_pred[k][y_pred[k, :, 1] > confidence_threshold] for k in range(y_pred.shape[0])]
@@ -97,7 +101,8 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
 
         plt.savefig(result_path + '/detection_' + file_names[k], format='jpg')
         plt.close('all')
-
+    
+    start_time = time.time()
     vector_a = np.array([perimeter_a[0] - perimeter_b[0], perimeter_a[1] - perimeter_b[1]])
     distance_a = np.linalg.norm(vector_a)
     for k in range(len(y_pred_thresh)):
@@ -118,28 +123,28 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
             vector_b = np.array([xmin - perimeter_a[0], ymin - perimeter_a[1]])
             vector_cross = np.cross(vector_a, vector_b)
             distance = np.linalg.norm(vector_cross/distance_a)
-            if vector_cross <= 0 or distance < threshold:
+            if vector_cross >= 0 or distance < threshold:
                 current_axis.add_patch(
                     plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#FF0000', fill=False, linewidth=2))
                 continue
             vector_b = np.array([xmin - perimeter_a[0], ymax - perimeter_a[1]])
             vector_cross = np.cross(vector_a, vector_b)
             distance = np.linalg.norm(vector_cross/distance_a)
-            if vector_cross <= 0 or distance < threshold:
+            if vector_cross >= 0 or distance < threshold:
                 current_axis.add_patch(
                     plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#FF0000', fill=False, linewidth=2))
                 continue
             vector_b = np.array([xmax - perimeter_a[0], ymin - perimeter_a[1]])
             vector_cross = np.cross(vector_a, vector_b)
             distance = np.linalg.norm(vector_cross/distance_a)
-            if vector_cross <= 0 or distance < threshold:
+            if vector_cross >= 0 or distance < threshold:
                 current_axis.add_patch(
                     plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#FF0000', fill=False, linewidth=2))
                 continue
             vector_b = np.array([xmax - perimeter_a[0], ymax - perimeter_a[1]])
             vector_cross = np.cross(vector_a, vector_b)
             distance = np.linalg.norm(vector_cross/distance_a)
-            if vector_cross <= 0 or distance < threshold:            
+            if vector_cross >= 0 or distance < threshold:            
                 current_axis.add_patch(
                     plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color='#FF0000', fill=False, linewidth=2))
                 continue
@@ -150,6 +155,8 @@ def perimeter_detection(weights_path, image_path, result_path, threshold, perime
         #plt.plot([perimeter_a[0], perimeter_b[0]], [perimeter_a[1], perimeter_b[1]], 'k')
         plt.savefig(result_path + '/perimeter_' + file_names[k], format='jpg')
         plt.close('all')
+    end_time = time.time()
+    print(end_time - start_time)
 
 
 @click.command()
