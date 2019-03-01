@@ -15,6 +15,18 @@ import tensorflow as tf
 from tensorflow.python.ops import gen_image_ops
 tf.image.non_max_suppression = gen_image_ops.non_max_suppression_v2
 
+def enhance_image(image):
+    for row in range(image.shape[0]):
+        for col in range(image.shape[1]):
+            sum_color = int(image[row][col][0]) + int(image[row][col][1]) + int(image[row][col][2])
+            if sum_color >= 10:
+                for channel in range(image.shape[2]):
+                    new_color = int(image[row][col][channel]) + 50
+                    if new_color > 255:
+                        new_color = 255
+                    image[row][col][channel] = new_color
+    return image
+
 def perimeter_detection(weights_path, video_path, result_path, threshold, perimeter_a, perimeter_b):
     img_height = 300
     img_width = 300
@@ -40,7 +52,7 @@ def perimeter_detection(weights_path, video_path, result_path, threshold, perime
                     normalize_coords=True,
                     subtract_mean=[123, 117, 104],
                     swap_channels=[2, 1, 0],
-                    confidence_thresh=0.5,
+                    confidence_thresh=0.1,
                     iou_threshold=0.45,
                     top_k=200,
                     nms_max_output_size=400)
@@ -53,15 +65,21 @@ def perimeter_detection(weights_path, video_path, result_path, threshold, perime
     process_images = []
     cap = cv2.VideoCapture(video_path)
 
+    num = 0
     while (cap.isOpened()):
         ret, frame = cap.read()
         if ret==True:
             transposed_frame = cv2.transpose(frame)
             transposed_frame = cv2.flip(transposed_frame, 1)
             original_images.append(transposed_frame)
-            #print(frame.shape)
-            resize_image = cv2.resize(transposed_frame, (img_height, img_width))
+            subtracted_image = cv2.subtract(transposed_frame, original_images[0])
+            subtracted_image = subtracted_image[600:1000, 0:720]
+            #subtracted_image = cv2.bitwise_not(subtracted_image)
+            subtracted_image = enhance_image(subtracted_image)
+            cv2.imwrite('perimeter_detection/sub_images/sub_' + str(num) + '.jpg', subtracted_image)
+            resize_image = cv2.resize(subtracted_image, (img_height, img_width))
             process_images.append(resize_image)
+            num += 1
             k = cv2.waitKey(20)
             if k & 0xff == ord('q'):
                 break
@@ -75,7 +93,7 @@ def perimeter_detection(weights_path, video_path, result_path, threshold, perime
     y_pred = model.predict(process_images, batch_size=8)
     # end_time = time.time()
     # print(end_time - start_time)
-    confidence_threshold = 0.5
+    confidence_threshold = 0.1
 
     y_pred_thresh = [y_pred[k][y_pred[k, :, 1] > confidence_threshold] for k in range(y_pred.shape[0])]
 
@@ -83,15 +101,12 @@ def perimeter_detection(weights_path, video_path, result_path, threshold, perime
     print('   class   conf xmin   ymin   xmax   ymax')
 
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    print(original_images[0].shape)
     result_video = cv2.VideoWriter('result.avi', fourcc, 25.0, (original_images[0].shape[0], original_images[0].shape[1]))
 
     for k in range(len(y_pred_thresh)):
         print(k)
         print(y_pred_thresh[k])
-        if k > 300:
-            break
-        colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
+        #colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
         classes = ['background',
                    'aeroplane', 'bicycle', 'bird', 'boat',
                    'bottle', 'bus', 'car', 'cat',
@@ -100,26 +115,34 @@ def perimeter_detection(weights_path, video_path, result_path, threshold, perime
                    'sheep', 'sofa', 'train', 'tvmonitor']
 
         #plt.figure(figsize=(12, 8))
-        plt.imshow(original_images[k])
-        plt.xticks([])
-        plt.yticks([])
-        current_axis = plt.gca()
+        #plt.imshow(original_images[k])
+        #plt.xticks([])
+        #plt.yticks([])
+        #current_axis = plt.gca()
 
         for box in y_pred_thresh[k]:
+            if box[0] != 15:
+                continue
             # Transform the predicted bounding boxes for the 300x300 image to the original image dimensions.
-            xmin = box[2] * original_images[k].shape[1] / img_width
-            ymin = box[3] * original_images[k].shape[0] / img_height
-            xmax = box[4] * original_images[k].shape[1] / img_width
-            ymax = box[5] * original_images[k].shape[0] / img_height
-            color = colors[int(box[0])]
+            #xmin = box[2] * original_images[k].shape[1] / img_width
+            #ymin = box[3] * original_images[k].shape[0] / img_height
+            #xmax = box[4] * original_images[k].shape[1] / img_width
+            #ymax = box[5] * original_images[k].shape[0] / img_height
+            xmin = box[2] * 720 / 300
+            ymin = box[3] * 400 / 300 + 600
+            xmax = box[4] * 720 / 300
+            ymax = box[5] * 400 / 300 + 600
+            if xmin < 400:
+                continue
+            #color = colors[int(box[0])]
             label = '{}: {:.2f}'.format(classes[int(box[0])], box[1])
-            current_axis.add_patch(
-                plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color=color, fill=False, linewidth=2))
-            current_axis.text(xmin, ymin, label, size='x-large', color='white', bbox={'facecolor': color, 'alpha': 1.0})
-
-        plt.savefig(result_path + '/detection_' + str(k) + '.jpg', format='jpg')
-        result_image = cv2.imread(result_path + '/detection_' + str(k) + '.jpg')
-        print(result_image.shape)
+            #current_axis.add_patch(
+            #    plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color=color, fill=False, linewidth=2))
+            #current_axis.text(xmin, ymin, label, size='x-large', color='white', bbox={'facecolor': color, 'alpha': 1.0})
+            cv2.rectangle(original_images[k], (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 255, 0), 2)
+        #plt.savefig(result_path + '/detection_' + str(k) + '.jpg', format='jpg')
+        cv2.imwrite(result_path + '/detection_' + str(k) + '.jpg', original_images[k])
+        result_image = original_images[k]
         transposed_image = cv2.transpose(result_image)
         transposed_image = cv2.flip(transposed_image, 0)
         result_video.write(transposed_image)
